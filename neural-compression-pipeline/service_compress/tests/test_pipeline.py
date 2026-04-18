@@ -16,8 +16,17 @@ def test_roundtrip_long() -> None:
     assert restored == long_text
 
 
-def test_ratio_positive() -> None:
-    # Long repeated input compresses well enough to beat Huffman header overhead
+def test_compression_reports_entropy_metrics() -> None:
     original = "a" * 2000
     packed = compress(original)
-    assert packed["ratio"] > 1.0
+    assert isinstance(packed.get("entropy_bits_per_symbol"), (int, float))
+    assert isinstance(packed.get("avg_huffman_bits_per_symbol"), (int, float))
+    assert isinstance(packed.get("encoding_efficiency"), (int, float))
+    assert packed["entropy_bits_per_symbol"] >= 0
+    assert packed["compression_rate"] > 0
+
+
+def test_compression_reasonable_ratio_on_repetitive_input() -> None:
+    original = "a" * 2000
+    packed = compress(original)
+    assert packed["compression_rate"] > 20.0

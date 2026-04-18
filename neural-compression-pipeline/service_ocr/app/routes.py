@@ -4,10 +4,11 @@ import uuid
 from typing import Union
 
 from celery.result import AsyncResult
-from fastapi import APIRouter, BackgroundTasks, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.model.inference import model_health_status, run_inference
+from app.ocr_metrics import load_ocr_accuracy_payload
 from app.worker import celery_app, process_ocr_and_compress
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
 _ALLOWED_IMAGE_TYPES = frozenset({"image/png", "image/jpeg"})
+
+
+@router.get("/accuracy")
+def get_ocr_accuracy_metrics() -> dict:
+    """Validation / test accuracies persisted after training (MNIST CNN + optional noise eval)."""
+    return load_ocr_accuracy_payload()
 
 
 def _reject_media_type(raw_type: str) -> JSONResponse | None:
@@ -35,6 +42,10 @@ def _reject_media_type(raw_type: str) -> JSONResponse | None:
 async def ocr_image(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(..., description="PNG or JPEG image of handwritten text"),
+    reference_text: str | None = Form(
+        None,
+        description="Optional ground-truth text to compute character_accuracy_vs_reference",
+    ),
 ) -> Union[dict, JSONResponse]:
     raw_type = image.content_type or ""
     bad = _reject_media_type(raw_type)
@@ -54,12 +65,20 @@ async def ocr_image(
 
     logger.info("OCR request file=%r bytes=%d", filename, len(payload))
 
-    result = run_inference(payload, background_tasks=background_tasks)
+    ref = reference_text.strip() if reference_text else None
+    result = run_inference(
+        payload,
+        background_tasks=background_tasks,
+        reference_text=ref,
+    )
 
     response: dict = {
-        "text": result["text"],
+        "text": result.get("text") or "",
         "confidence": result["confidence"],
         "filename": filename,
+        "ocr_backend": result.get("ocr_backend"),
+        "mnist_validation_accuracy_recorded": result.get("mnist_validation_accuracy_recorded"),
+        "character_accuracy_vs_reference": result.get("character_accuracy_vs_reference"),
     }
     if "error" in result:
         response["error"] = result["error"]
@@ -103,9 +122,10 @@ def ocr_job_status(job_id: str) -> dict:
 
 @router.get("/health", response_model=None)
 def ocr_health() -> Union[dict, JSONResponse]:
-    """Report whether the SimpleHTR singleton loaded."""
+    """Healthy if at least one CNN (MNIST digit model or SimpleHTR line model) loads."""
     info = model_health_status()
-    if info.get("model_loaded"):
+    ok = info.get("simple_htr_loaded") or info.get("mnist_loaded")
+    if ok:
         return {"status": "ok", **info}
     return JSONResponse(
         status_code=503,

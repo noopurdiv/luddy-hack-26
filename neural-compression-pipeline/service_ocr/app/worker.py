@@ -39,6 +39,8 @@ def process_ocr_and_compress(image_b64: str, job_id: str) -> dict:
 
     ocr_result = run_inference(image_bytes, background_tasks=None)
 
+    raw_text = ocr_result.get("text") or ""
+
     compress_url = os.environ.get(
         "COMPRESS_SERVICE_URL",
         "http://service_compress:8002/compress",
@@ -46,7 +48,7 @@ def process_ocr_and_compress(image_b64: str, job_id: str) -> dict:
     with httpx.Client(timeout=120.0) as client:
         resp = client.post(
             compress_url,
-            json={"text": ocr_result["text"]},
+            json={"text": raw_text},
         )
         resp.raise_for_status()
         compress_result = resp.json()

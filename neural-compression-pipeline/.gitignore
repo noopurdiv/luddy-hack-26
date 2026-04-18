@@ -1,1 +1,2 @@
 .env
+service_ocr/app/model/mnist-model/*.keras

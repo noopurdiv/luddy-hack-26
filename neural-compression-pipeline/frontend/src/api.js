@@ -16,14 +16,29 @@ export async function fetchOcrHealth() {
   return r;
 }
 
+/** Validation/test accuracies from MNIST training + optional noise eval (see README). */
+export async function fetchOcrAccuracy() {
+  const r = await fetch(`${OCR_BASE}/ocr/accuracy`);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    throw new Error(formatHttpError(r.status, data));
+  }
+  return data;
+}
+
 export async function fetchCompressHealth() {
   const r = await fetch(`${COMPRESS_BASE}/health`);
   return r;
 }
 
-export async function postOcr(imageFile) {
+/** @param {{ referenceText?: string }} [options] optional ground truth for character accuracy */
+export async function postOcr(imageFile, options = {}) {
   const fd = new FormData();
   fd.append("image", imageFile);
+  const ref = options.referenceText?.trim();
+  if (ref) {
+    fd.append("reference_text", ref);
+  }
   const r = await fetch(`${OCR_BASE}/ocr`, {
     method: "POST",
     body: fd,

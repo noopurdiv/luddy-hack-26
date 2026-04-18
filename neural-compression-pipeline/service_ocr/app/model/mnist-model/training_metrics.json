@@ -1,0 +1,13 @@
+{
+  "framework": "TensorFlow/Keras",
+  "dataset": "MNIST",
+  "task": "digit_classification_10_class",
+  "validation_split_fraction": 0.1,
+  "best_validation_accuracy": 0.9923333525657654,
+  "test_accuracy": 0.9907000064849854,
+  "min_validation_acc_gate": 0.95,
+  "min_test_acc_gate": 0.95,
+  "scoring_eligible": true,
+  "epochs_completed": 8,
+  "notes": "Character-level accuracy for digits 0\u20139 equals top-1 classification accuracy on MNIST. Case requires \u226595% on the validation set; this run met the gates above."
+}

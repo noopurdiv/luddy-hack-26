@@ -9,9 +9,12 @@ export function LeftControls({
   previewUrl,
   disabled,
   processing,
+  processingKind,
+  canDecompress,
   errorHint,
   onFileSelect,
-  onRun,
+  onCompress,
+  onDecompress,
 }) {
   const inputRef = useRef(null);
 
@@ -97,14 +100,24 @@ export function LeftControls({
 
       {errorHint ? <p className={styles.fieldError}>{errorHint}</p> : null}
 
-      <button
-        type="button"
-        className={styles.runBtn}
-        disabled={disabled || !file || processing}
-        onClick={onRun}
-      >
-        {processing ? "Processing…" : "Run pipeline"}
-      </button>
+      <div className={styles.btnRow}>
+        <button
+          type="button"
+          className={styles.runBtn}
+          disabled={disabled || !file || processing}
+          onClick={onCompress}
+        >
+          {processingKind === "compress" ? "Compressing…" : "Compress"}
+        </button>
+        <button
+          type="button"
+          className={styles.secondaryBtn}
+          disabled={disabled || !file || processing || !canDecompress}
+          onClick={onDecompress}
+        >
+          {processingKind === "decompress" ? "Decompressing…" : "Decompress"}
+        </button>
+      </div>
     </div>
   );
 }

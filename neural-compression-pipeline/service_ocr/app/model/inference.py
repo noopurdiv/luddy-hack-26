@@ -1,7 +1,8 @@
 """
-SimpleHTR inference for the OCR service.
+OCR inference: MNIST-trained CNN (digits) → SimpleHTR line model → Tesseract fallback.
 
-Loads checkpoint weights from ``app/model/line-model/`` (see README).
+MNIST CNN weights: ``app/model/mnist-model/mnist_cnn.keras`` (see ``training/train_mnist_cnn.py``).
+SimpleHTR weights: ``app/model/line-model/``.
 """
 
 from __future__ import annotations
@@ -16,9 +17,12 @@ import cv2
 import numpy as np
 from fastapi import BackgroundTasks
 
+from app.char_accuracy import character_accuracy_ratio
 from app.model.dataloader_iam import Batch
+from app.model.mnist_inference import ensure_mnist_model, infer_mnist_digit
 from app.model.model import DecoderType, Model
 from app.model.preprocessor import Preprocessor
+from app.ocr_metrics import recorded_mnist_validation_accuracy
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +69,8 @@ def infer(model: Model, fn_img: str | os.PathLike) -> DecoderOutput:
     return DecoderOutput(text=recognized[0], probability=prob)
 
 
-def _ensure_model() -> Model | None:
-    """Load TF model once; record failure reason for health checks."""
+def _ensure_simple_htr_model() -> Model | None:
+    """Load TF line model once; record failure reason for health checks."""
     global _MODEL, _MODEL_ERROR
 
     if _MODEL is not None:
@@ -92,7 +96,7 @@ def _ensure_model() -> Model | None:
         return None
 
     _MODEL = loaded
-    logger.info("SimpleHTR model ready (dir=%s)", model_dir)
+    logger.info("SimpleHTR line-model ready (dir=%s)", model_dir)
     return loaded
 
 
@@ -117,20 +121,29 @@ def _tesseract_ocr(img_path: str) -> tuple[str, float]:
         return "", 0.0
 
 
+_MNIST_CONF_THRESHOLD = 0.82
+
+
 def run_inference(
     image_bytes: bytes,
     *,
     background_tasks: BackgroundTasks | None = None,
+    reference_text: str | None = None,
 ) -> dict:
     """
     Run OCR on image bytes.
 
-    Tries SimpleHTR first (optimised for single handwritten lines).  Falls back to
-    Tesseract when SimpleHTR returns empty text or when the model is unavailable,
-    which handles full document scans and printed text correctly.
-    """
-    model = _ensure_model()
+    Order:
+      1. MNIST CNN on small grayscale crops (≤96 px longest side), for digit tiles.
+      2. SimpleHTR line CNN for handwritten lines.
+      3. Tesseract fallback.
 
+    ``reference_text`` (optional): ground-truth transcript; response includes
+    ``character_accuracy_vs_reference`` (normalized edit-distance accuracy).
+
+    ``mnist_validation_accuracy_recorded`` is always read from persisted training metrics
+    when present (MNIST CNN validation split — character-level for digits).
+    """
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
     tmp_path = tmp.name
     try:
@@ -142,23 +155,59 @@ def run_inference(
     try:
         text = ""
         confidence = 0.0
+        ocr_backend: str | None = None
 
-        if model is not None:
+        mnist_recorded_val = recorded_mnist_validation_accuracy()
+
+        mnist_digit, mnist_prob = infer_mnist_digit(tmp_path)
+        if mnist_digit is not None and mnist_prob >= _MNIST_CONF_THRESHOLD:
+            logger.info(
+                "MNIST CNN prediction digit=%s prob=%.4f",
+                mnist_digit,
+                mnist_prob,
+            )
+            text = mnist_digit
+            confidence = mnist_prob
+            ocr_backend = "mnist_cnn"
+
+        model = _ensure_simple_htr_model()
+
+        if not text.strip() and model is not None:
             try:
                 decoded = infer(model, tmp_path)
                 text = decoded.text
                 confidence = float(decoded.probability)
+                ocr_backend = "simple_htr"
             except Exception as exc:
-                logger.warning("SimpleHTR inference failed, falling back to Tesseract: %s", exc)
+                logger.warning("SimpleHTR inference failed: %s", exc)
 
         if not text.strip():
-            logger.info("SimpleHTR returned empty text; running Tesseract fallback")
+            logger.info("MNIST/STTR empty or skipped; trying Tesseract")
             text, confidence = _tesseract_ocr(tmp_path)
+            ocr_backend = "tesseract"
 
-        return {"text": text, "confidence": confidence}
+        ref = reference_text.strip() if reference_text else ""
+        char_vs_ref: float | None = None
+        if ref:
+            char_vs_ref = character_accuracy_ratio(text, ref)
+
+        return {
+            "text": text,
+            "confidence": confidence,
+            "ocr_backend": ocr_backend,
+            "mnist_validation_accuracy_recorded": mnist_recorded_val,
+            "character_accuracy_vs_reference": char_vs_ref,
+        }
     except Exception as exc:  # noqa: BLE001
         logger.exception("OCR inference failed")
-        return {"text": "", "confidence": 0.0, "error": str(exc)}
+        return {
+            "text": "",
+            "confidence": 0.0,
+            "error": str(exc),
+            "ocr_backend": None,
+            "mnist_validation_accuracy_recorded": recorded_mnist_validation_accuracy(),
+            "character_accuracy_vs_reference": None,
+        }
     finally:
         if background_tasks is not None:
             background_tasks.add_task(_unlink_temp, tmp_path)
@@ -167,8 +216,15 @@ def run_inference(
 
 
 def model_health_status() -> dict:
-    """Return whether the lazy singleton loaded successfully."""
-    _ensure_model()
-    if _MODEL is not None:
-        return {"model_loaded": True, "error": None}
-    return {"model_loaded": False, "error": _MODEL_ERROR}
+    """Report SimpleHTR + MNIST CNN load status."""
+    from app.model.mnist_inference import mnist_health
+
+    _ensure_simple_htr_model()
+    mn = mnist_health()
+
+    line_ok = _MODEL is not None
+    return {
+        "simple_htr_loaded": line_ok,
+        "simple_htr_error": None if line_ok else _MODEL_ERROR,
+        **mn,
+    }

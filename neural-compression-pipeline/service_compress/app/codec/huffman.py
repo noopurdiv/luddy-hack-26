@@ -1,87 +1,50 @@
-"""UTF-8 Huffman compression built on Nayuki's reference ``huffmancoding`` module."""
+"""
+Huffman compression layer — delegates to the adaptive Huffman implementation.
 
+Exposes the same ``huffman_compress`` / ``huffman_decompress`` /
+``analyze_byte_source_for_huffman`` surface consumed by pipeline.py.
+
+No third-party compression libraries are used.  The underlying algorithm
+is a from-scratch adaptive Huffman codec (see adaptive_huffman.py).
+"""
 from __future__ import annotations
 
-import io
-
-from app.codec.huffmancoding import (
-    BitInputStream,
-    BitOutputStream,
-    CanonicalCode,
-    FrequencyTable,
-    HuffmanDecoder,
-    HuffmanEncoder,
+from app.codec.adaptive_huffman import (
+    adaptive_compress,
+    adaptive_decompress,
+    analyze_compression_metrics,
 )
 
-_SYMBOL_LIMIT = 256
-_HEADER_SYMBOL_COUNT = 4
-_HEADER_CODE_LENGTHS = _SYMBOL_LIMIT
+_FLAG_RAW = b"\x00"         # payload stored verbatim (adaptive would expand)
+_FLAG_ADAPTIVE = b"\x01"    # adaptive Huffman compressed stream
 
 
-def _build_frequency_table(data: bytes) -> FrequencyTable:
-    freqs = [0] * _SYMBOL_LIMIT
-    for b in data:
-        freqs[b] += 1
-    return FrequencyTable(freqs)
+def analyze_byte_source_for_huffman(data: bytes) -> dict[str, float]:
+    """Shannon entropy, average code length, and encoding efficiency for *data*."""
+    return analyze_compression_metrics(data)
 
 
-def huffman_compress(text: str) -> bytes:
+def huffman_compress(data: bytes) -> bytes:
     """
-    Compress UTF-8 text with Huffman coding.
+    Compress raw bytes with adaptive Huffman coding.
 
-    Header layout (big-endian):
-      - 4 bytes: ``num_symbols`` — number of bytes in the original UTF-8 payload
-      - 256 bytes: canonical code length per symbol ``0..255`` (0 = unused)
-      - remaining bytes: Huffman-coded bit stream (zero-padded to a byte boundary)
+    Output is prefixed with a 1-byte flag:
+      ``0x00`` — raw bytes stored verbatim (adaptive Huffman would expand).
+      ``0x01`` — adaptive Huffman compressed stream.
     """
-    data = text.encode("utf-8")
-    if len(data) == 0:
-        raise ValueError("Cannot compress empty text")
-
-    ft = _build_frequency_table(data)
-    code_tree = ft.build_code_tree()
-    canon = CanonicalCode(tree=code_tree, symbollimit=_SYMBOL_LIMIT)
-    lengths = canon.codelengths
-
-    buf = io.BytesIO()
-    buf.write(len(data).to_bytes(_HEADER_SYMBOL_COUNT, "big", signed=False))
-    buf.write(bytes(lengths))
-
-    bit_out = BitOutputStream(buf)
-    enc = HuffmanEncoder(bit_out)
-    enc.codetree = canon.to_code_tree()
-    for symbol in data:
-        enc.write(symbol)
-    # Pad to byte boundary without closing the BytesIO so getvalue() still works.
-    while bit_out.numbitsfilled != 0:
-        bit_out.write(0)
-    return buf.getvalue()
+    if not data:
+        raise ValueError("Cannot compress empty data")
+    compressed = adaptive_compress(data)
+    if len(compressed) < len(data):
+        return _FLAG_ADAPTIVE + compressed
+    return _FLAG_RAW + data
 
 
-def huffman_decompress(data: bytes) -> str:
-    """Inverse of :func:`huffman_compress`; returns the original Unicode string."""
-    min_len = _HEADER_SYMBOL_COUNT + _HEADER_CODE_LENGTHS
-    if len(data) < min_len:
-        raise ValueError("Truncated Huffman payload")
-
-    num_symbols = int.from_bytes(data[:_HEADER_SYMBOL_COUNT], "big", signed=False)
-    lengths = list(data[_HEADER_SYMBOL_COUNT:min_len])
-    payload = data[min_len:]
-
-    if len(lengths) != _SYMBOL_LIMIT:
-        raise ValueError("Invalid canonical code length table")
-
-    canon = CanonicalCode(codelengths=lengths)
-    tree = canon.to_code_tree()
-
-    inp = io.BytesIO(payload)
-    bit_in = BitInputStream(inp)
-    dec = HuffmanDecoder(bit_in)
-    dec.codetree = tree
-
-    out = bytearray()
-    for _ in range(num_symbols):
-        out.append(dec.read())
-    bit_in.close()
-
-    return out.decode("utf-8")
+def huffman_decompress(data: bytes) -> bytes:
+    """Inverse of :func:`huffman_compress`; returns the original bytes."""
+    if not data:
+        raise ValueError("Empty Huffman payload")
+    flag, payload = data[:1], data[1:]
+    if flag == _FLAG_RAW:
+        return payload
+    return adaptive_decompress(payload)

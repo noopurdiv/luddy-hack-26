@@ -122,6 +122,38 @@
   margin-left: 2px;
 }
 
+.fileActions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fileBtn {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 400;
+  color: #a8a5a0;
+  background: #0e0e0e;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.fileBtn:hover:not(:disabled) {
+  border-color: #444;
+  color: #e8e6e0;
+}
+
+.fileBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .badge {
   margin-top: 14px;
   display: inline-flex;
@@ -184,9 +216,14 @@
     color 0.15s ease;
 }
 
-.copyBtn:hover {
+.copyBtn:hover:not(:disabled) {
   border-color: #444;
   color: #888;
+}
+
+.copyBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .ta {
@@ -212,4 +249,8 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   color: #1d9e75;
+}
+
+.matchLineBad {
+  color: #c45a5a;
 }

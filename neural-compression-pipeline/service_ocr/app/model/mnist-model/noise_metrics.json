@@ -1,0 +1,10 @@
+{
+  "dataset": "MNIST",
+  "clean_test_accuracy": 0.9907000064849854,
+  "gaussian_noise_mean_accuracy": 0.9300333460172018,
+  "gaussian_sigma": 0.35,
+  "salt_and_pepper_accuracy": 0.9641000032424927,
+  "salt_fraction": 0.04,
+  "pepper_fraction": 0.04,
+  "notes": "Noise profiles per graduate rubric (Gaussian + salt-and-pepper)."
+}
