@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 _METRICS_DIR = Path(__file__).resolve().parent / "model" / "mnist-model"
+_SCORING_VAL_ACC_GATE = 0.95
 
 # (mtime_ns, best_validation_accuracy or None) — avoid re-reading JSON every OCR request.
 _recorded_val_cache: tuple[float | None, float | None] = (None, None)
@@ -46,6 +47,56 @@ def recorded_mnist_validation_accuracy() -> float | None:
 
     _recorded_val_cache = (mtime, out)
     return out
+
+
+def evaluate_scoring_eligibility() -> dict:
+    """
+    Check whether the MNIST CNN meets the ≥95% validation-accuracy gate required
+    for scoring.
+
+    Returns a dict with:
+      - ``eligible`` (bool): True only when metrics file is present and
+        ``best_validation_accuracy >= 0.95``.
+      - ``reason_code`` (str): machine-readable reason when not eligible.
+      - ``best_validation_accuracy`` (float | None): value from the metrics file.
+      - ``metrics_present`` (bool): whether ``training_metrics.json`` was found.
+    """
+    path = _METRICS_DIR / "training_metrics.json"
+    if not path.is_file():
+        return {
+            "eligible": False,
+            "reason_code": "metrics_file_missing",
+            "best_validation_accuracy": None,
+            "metrics_present": False,
+        }
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return {
+            "eligible": False,
+            "reason_code": f"metrics_file_unreadable: {exc}",
+            "best_validation_accuracy": None,
+            "metrics_present": True,
+        }
+    raw = data.get("best_validation_accuracy")
+    if not isinstance(raw, (int, float)) or isinstance(raw, bool):
+        return {
+            "eligible": False,
+            "reason_code": "metrics_missing_field_best_validation_accuracy",
+            "best_validation_accuracy": None,
+            "metrics_present": True,
+        }
+    val_acc = float(raw)
+    # allow percent representation (e.g. 99.2 → 0.992)
+    if val_acc > 1.0:
+        val_acc = val_acc / 100.0
+    eligible = val_acc >= _SCORING_VAL_ACC_GATE
+    return {
+        "eligible": eligible,
+        "reason_code": "eligible" if eligible else f"val_acc_{val_acc:.4f}_below_gate_{_SCORING_VAL_ACC_GATE}",
+        "best_validation_accuracy": val_acc,
+        "metrics_present": True,
+    }
 
 
 def load_ocr_accuracy_payload() -> dict:
