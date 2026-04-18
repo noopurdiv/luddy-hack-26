@@ -190,9 +190,9 @@ export default function App() {
         <div className={styles.sidebarBrand}>
           <div className={styles.brandLogo}>
             <div className={styles.brandIcon}><div className={styles.brandIconInner}/></div>
-            <span className={styles.brandName}>Processor Pro</span>
+            <span className={styles.brandName}>Neuro Compress</span>
           </div>
-          <div className={styles.brandSub}>Technical Purist v1.0</div>
+          <div className={styles.brandSub}>Neural Compression v1.0</div>
         </div>
         <nav className={styles.sidebarNav}>
           {NAV_ITEMS.map(item => (
@@ -217,7 +217,7 @@ export default function App() {
       {/* ── Main ── */}
       <div className={styles.main}>
         <header className={styles.topBar}>
-          <span className={styles.topBarBrand}>DocPurist</span>
+          <span className={styles.topBarBrand}>Neuro Compress</span>
           {view === "result" && (
             <div className={styles.topBarTabs}>
               <span className={`${styles.topBarTab} ${styles.topBarTabActive}`}>Files</span>
@@ -232,7 +232,7 @@ export default function App() {
             <button className={styles.topBarIconBtn} title="Settings">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
             </button>
-            <div className={styles.topBarAvatar}>PP</div>
+            <div className={styles.topBarAvatar}>NC</div>
           </div>
         </header>
 

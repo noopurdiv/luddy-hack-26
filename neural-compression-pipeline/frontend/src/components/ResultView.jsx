@@ -87,37 +87,45 @@ export function ResultView({ filename, previewUrl, ocrText, confidence, ocrBacke
             </div>
 
             <div className={s.bigMetric}>
-              <span className={s.bigMetricLabel}>OCR Confidence</span>
-              <span className={s.bigMetricValue} style={{ color: confPct >= 80 ? "var(--blue)" : "var(--amber)" }}>
-                {confPct.toFixed(1)}%
-              </span>
-            </div>
-            <div className={s.barTrack}><div className={s.barFill} style={{ width: `${confPct}%` }}/></div>
-
-            <div className={s.bigMetric} style={{ marginTop: 14 }}>
               <span className={s.bigMetricLabel}>Character-Level Accuracy</span>
               <span className={s.bigMetricValue} style={{ color: "var(--green)" }}>
                 {accuracy}%
               </span>
             </div>
             <div className={s.barTrack}><div className={s.barFillGreen} style={{ width: `${accuracy}%` }}/></div>
-            <div className={s.gateRow}>
-              <span className={s.gateLabel}>Required for scoring</span>
-              <span className={s.gateThreshold}>≥ 95.00%</span>
-            </div>
-            {accuracy >= 95 && (
-              <div className={s.gateOk}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                Meets the ≥95% validation gate
-              </div>
-            )}
 
             <div className={s.bigMetric} style={{ marginTop: 14 }}>
               <span className={s.bigMetricLabel}>Processing Time</span>
               <span className={s.bigMetricValue}>{processingTime ? `${processingTime}s` : "—"}</span>
             </div>
             <div className={s.barTrack}><div className={s.barFillBlue} style={{ width: processingTime ? `${Math.min(100, (parseFloat(processingTime) / 10) * 100)}%` : "0%" }}/></div>
+          </div>
 
+          {/* Compression card — placed right below Processing Time */}
+          <div className={s.compressCard}>
+            <div className={s.compressHead}>
+              <div>
+                <div className={s.compressLabel}>Final Step</div>
+                <div className={s.compressTitle}>Compression Result</div>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            </div>
+            <div className={s.compressStats}>
+              <div className={s.csRow}><span>Original</span><span>{fmtBytes(compressStats.original_size)}</span></div>
+              <div className={s.csRow}><span>Compressed</span><span style={{ color: "white", fontWeight: 600 }}>{fmtBytes(compressStats.compressed_size)}</span></div>
+              <div className={s.csRow}><span>Ratio</span><span style={{ color: "#86efac" }}>{compressionPct}%</span></div>
+              {effPct && <div className={s.csRow}><span>Efficiency</span><span style={{ color: "#86efac" }}>{effPct}%</span></div>}
+              {compressStats.entropy_bits_per_symbol && (
+                <div className={s.csRow}><span>Entropy (bits/sym)</span><span>{compressStats.entropy_bits_per_symbol.toFixed(4)}</span></div>
+              )}
+            </div>
+            <button className={s.decompressBtn} onClick={onDecompress} disabled={!canDecompress}>
+              Run Lossless Verification →
+            </button>
+            <p className={s.compressHint}>Reduces file size without quality loss. Algorithm: BWT + MTF + Adaptive Huffman.</p>
+          </div>
+
+          <div className={s.card}>
             {/* Grid */}
             <div className={s.statsGrid}>
               <div className={s.statBox}>
@@ -148,30 +156,6 @@ export function ResultView({ filename, previewUrl, ocrText, confidence, ocrBacke
               <img src={previewUrl} alt="Original scan" className={s.previewThumb} />
             </div>
           )}
-
-          {/* Compression card */}
-          <div className={s.compressCard}>
-            <div className={s.compressHead}>
-              <div>
-                <div className={s.compressLabel}>Final Step</div>
-                <div className={s.compressTitle}>Compression Result</div>
-              </div>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-            </div>
-            <div className={s.compressStats}>
-              <div className={s.csRow}><span>Original</span><span>{fmtBytes(compressStats.original_size)}</span></div>
-              <div className={s.csRow}><span>Compressed</span><span style={{ color: "white", fontWeight: 600 }}>{fmtBytes(compressStats.compressed_size)}</span></div>
-              <div className={s.csRow}><span>Ratio</span><span style={{ color: "#86efac" }}>{compressionPct}%</span></div>
-              {effPct && <div className={s.csRow}><span>Efficiency</span><span style={{ color: "#86efac" }}>{effPct}%</span></div>}
-              {compressStats.entropy_bits_per_symbol && (
-                <div className={s.csRow}><span>Entropy (bits/sym)</span><span>{compressStats.entropy_bits_per_symbol.toFixed(4)}</span></div>
-              )}
-            </div>
-            <button className={s.decompressBtn} onClick={onDecompress} disabled={!canDecompress}>
-              Run Lossless Verification →
-            </button>
-            <p className={s.compressHint}>Reduces file size without quality loss. Algorithm: BWT + MTF + Adaptive Huffman.</p>
-          </div>
         </div>
       </div>
     </div>

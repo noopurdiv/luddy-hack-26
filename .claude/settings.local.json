@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(docker compose *)",
-      "Bash(tasklist /fi \"PID eq 21232\")",
-      "Bash(tasklist /fi \"PID eq 14180\")"
-    ]
-  }
-}
