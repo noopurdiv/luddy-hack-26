@@ -40,21 +40,22 @@ def _reject_media_type(raw_type: str) -> JSONResponse | None:
     return None
 
 
-_COMPRESS_URL = os.environ.get(
-    "COMPRESS_SERVICE_URL",
-    "http://service_compress:8002/compress",
-)
+def _compress_url() -> str:
+    base = os.environ.get("COMPRESS_SERVICE_URL", "http://service_compress:8002")
+    base = base.rstrip("/")
+    return base if base.endswith("/compress") else f"{base}/compress"
 
 
 def _call_compress(text: str) -> dict | None:
     """POST recognized text to the compression service; return result or None on failure."""
+    url = _compress_url()
     try:
         with httpx.Client(timeout=30.0) as client:
-            resp = client.post(_COMPRESS_URL, json={"text": text})
+            resp = client.post(url, json={"text": text})
             resp.raise_for_status()
             return resp.json()
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Compression service call failed: %s", exc)
+        logger.warning("Compression service call failed (%s): %s", url, exc)
         return None
 
 
