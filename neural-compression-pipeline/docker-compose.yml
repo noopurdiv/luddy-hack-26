@@ -1,0 +1,133 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - pipeline_net
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  service_compress:
+    build: ./service_compress
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    env_file:
+      - .env
+    networks:
+      - pipeline_net
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  service_ocr:
+    build: ./service_ocr
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      SERVICE_MODE: api
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      OCR_SERVICE_URL: ${OCR_SERVICE_URL:-http://service_ocr:8001}
+      COMPRESS_SERVICE_URL: ${COMPRESS_SERVICE_URL:-http://service_compress:8002}
+    env_file:
+      - .env
+    volumes:
+      - model_cache:/app/app/model/line-model
+    networks:
+      - pipeline_net
+    depends_on:
+      redis:
+        condition: service_healthy
+      service_compress:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  ocr_worker:
+    build: ./service_ocr
+    restart: unless-stopped
+    environment:
+      SERVICE_MODE: worker
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      COMPRESS_SERVICE_URL: ${COMPRESS_SERVICE_URL:-http://service_compress:8002}
+    env_file:
+      - .env
+    volumes:
+      - model_cache:/app/app/model/line-model
+    networks:
+      - pipeline_net
+    depends_on:
+      redis:
+        condition: service_healthy
+      service_compress:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A app.worker:celery_app inspect ping -t 5 2>/dev/null | grep -q pong || exit 1",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_OCR_URL: ${VITE_OCR_URL:-http://localhost:8001}
+        VITE_COMPRESS_URL: ${VITE_COMPRESS_URL:-http://localhost:8002}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - pipeline_net
+    depends_on:
+      service_ocr:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  pipeline_net:
+    driver: bridge
+
+volumes:
+  redis_data:
+  model_cache:

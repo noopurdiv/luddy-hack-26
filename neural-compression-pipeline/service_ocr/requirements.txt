@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+celery
+redis
+pillow
+numpy
+tensorflow==2.13.0
+opencv-python-headless
+lmdb
+httpx>=0.27
+python-multipart
+pytesseract
+Pillow

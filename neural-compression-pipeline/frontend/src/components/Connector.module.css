@@ -1,0 +1,20 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.line {
+  flex: 1;
+  height: 0;
+  border-top: 1px dashed #1e1e1e;
+}
+
+.label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #2a2a2a;
+  white-space: nowrap;
+}

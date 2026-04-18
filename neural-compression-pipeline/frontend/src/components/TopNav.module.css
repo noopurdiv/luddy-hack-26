@@ -1,0 +1,43 @@
+.bar {
+  height: 57px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  border-bottom: 1px solid #1a1a1a;
+  background: #080808;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7f77dd;
+  flex-shrink: 0;
+}
+
+.brand {
+  font-family: "Syne", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #e8e6e0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+}
+
+.version {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: #555;
+}

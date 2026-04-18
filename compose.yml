@@ -1,0 +1,9 @@
+# Run `docker compose up --build -d` from this folder (`Luddy Hackathon`).
+# Delegates to the monorepo stack under neural-compression-pipeline/.
+#
+# Requires Docker Compose v2.20+ (`include` support). If this fails, instead run:
+#   cd neural-compression-pipeline
+#   docker compose up --build -d
+
+include:
+  - path: neural-compression-pipeline/docker-compose.yml

@@ -1,0 +1,61 @@
+.section {
+  margin-top: 24px;
+}
+
+.sectionLabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #444;
+  margin-bottom: 12px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rowLabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #444;
+}
+
+.pill {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.pillIdle {
+  background: #141414;
+  color: #333;
+  border-color: #1e1e1e;
+}
+
+.pillRunning {
+  background: #1a1600;
+  color: #ba7517;
+  border-color: #2a2000;
+}
+
+.pillDone {
+  background: #0a1a10;
+  color: #1d9e75;
+  border-color: #0f2a18;
+}

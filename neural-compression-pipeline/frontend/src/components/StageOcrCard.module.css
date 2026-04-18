@@ -1,0 +1,135 @@
+.card {
+  background: #0c0c0c;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #141414;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.stageNum {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 400;
+  color: #333;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+.stageTitle {
+  font-family: "Syne", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #e8e6e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusPill {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.spIdle {
+  background: #141414;
+  color: #333;
+  border-color: #1e1e1e;
+}
+
+.spRunning {
+  background: #1a1600;
+  color: #ba7517;
+  border-color: #2a2000;
+}
+
+.spDone {
+  background: #0a1a10;
+  color: #1d9e75;
+  border-color: #0f2a18;
+}
+
+.body {
+  padding: 18px;
+}
+
+.ta {
+  width: 100%;
+  min-height: 90px;
+  resize: none;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #1a1a1a;
+  background: #080808;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #b0ada6;
+}
+
+.ta::placeholder {
+  color: #444;
+}
+
+.confRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.confLabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.barTrack {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: #1a1a1a;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 2px;
+  background: #1d9e75;
+  transition: width 0.35s ease;
+}
+
+.confVal {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: #1d9e75;
+  width: 42px;
+  text-align: right;
+  flex-shrink: 0;
+}
