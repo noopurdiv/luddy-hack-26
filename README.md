@@ -22,12 +22,6 @@ This project consists of:
 
 ### Pipeline Flow
 
-
-
-Image Input → OCR Service → Extracted Text → Compression Service → Compressed Output
-↓
-Decompression → Recovered Text
-
 <img width="941" height="554" alt="WhatsApp Image 2026-04-18 at 4 36 54 PM (1)" src="https://github.com/user-attachments/assets/c8d6a414-e96f-411c-b118-b5044bc110ff" />
 
 ---
