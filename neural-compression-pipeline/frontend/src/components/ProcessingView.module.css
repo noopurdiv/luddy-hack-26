@@ -1,0 +1,57 @@
+.root {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 70vh;
+}
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 48px 56px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  text-align: center; max-width: 480px; width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.spinner {
+  width: 56px; height: 56px;
+  position: relative; margin-bottom: 8px;
+}
+.spinnerRing {
+  position: absolute; inset: 0;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.spinnerDot {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  background: var(--blue); border-radius: 50%;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.filename { font-size: 13px; color: var(--text-secondary); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage { font-size: 13px; color: var(--blue); font-weight: 500; min-height: 20px; }
+
+.steps {
+  display: flex; align-items: center; gap: 0;
+  margin-top: 24px; width: 100%;
+}
+.step {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  flex: 1; font-size: 10px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.04em; text-align: center;
+}
+.stepDot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--border); border: 2px solid var(--border);
+  transition: background 0.3s, border-color 0.3s;
+}
+.stepActive .stepDot { background: var(--blue); border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
+.stepActive { color: var(--blue); }
+.stepDone .stepDot { background: var(--green); border-color: var(--green); }
+.stepDone { color: var(--green); }
+
+.stepLine { flex: 1; height: 2px; background: var(--border); max-width: 60px; margin-bottom: 16px; }

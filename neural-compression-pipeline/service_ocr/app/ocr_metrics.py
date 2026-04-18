@@ -6,12 +6,7 @@ import json
 from pathlib import Path
 
 _METRICS_DIR = Path(__file__).resolve().parent / "model" / "mnist-model"
-# Gate lowered to 0.85 for EMNIST-Balanced (47 classes).
-# EMNIST-Balanced is inherently harder than 10-class MNIST:
-#   MNIST  (10 classes): top CNNs reach 99%+
-#   EMNIST (47 classes): top CNNs reach 88-91%
-# A 85% floor on a 47-class problem is the practical equivalent of 95% on 10-class MNIST.
-_SCORING_VAL_ACC_GATE = 0.85
+_SCORING_VAL_ACC_GATE = 0.95
 
 # (mtime_ns, best_validation_accuracy or None) — avoid re-reading JSON every OCR request.
 _recorded_val_cache: tuple[float | None, float | None] = (None, None)

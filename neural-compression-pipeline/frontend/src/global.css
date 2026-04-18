@@ -1,34 +1,53 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sidebar-bg: #0d1117;
+  --sidebar-border: #21262d;
+  --sidebar-text: #8b949e;
+  --sidebar-text-active: #f0f6fc;
+  --sidebar-hover: #161b22;
+  --sidebar-active-bg: #1f2937;
+  --sidebar-accent: #2563eb;
+  --sidebar-width: 220px;
+
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --blue-dark: #1d4ed8;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.04);
+
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
-  margin: 0;
-}
-
-body {
-  font-family: "Syne", system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: #e8e6e0;
-  background: #080808;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-textarea {
-  font-family: inherit;
-}
-
-::selection {
-  background: rgba(127, 119, 221, 0.35);
-}
+button { font-family: inherit; cursor: pointer; }
+textarea, input { font-family: inherit; }
