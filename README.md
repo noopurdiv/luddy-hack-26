@@ -58,8 +58,6 @@ Decompression → Recovered Text
 #### Features:
 - Inference routing:
   - MNIST CNN (primary)
-  - SimpleHTR (optional)
-  - Tesseract fallback
 - Async processing with **Celery**
 
 ---
