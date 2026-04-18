@@ -121,7 +121,11 @@ def _tesseract_ocr(img_path: str) -> tuple[str, float]:
         return "", 0.0
 
 
-_MNIST_CONF_THRESHOLD = 0.82
+# Lowered from 0.82 (MNIST 10-class) to 0.40 because:
+#  - EMNIST-Balanced is a 47-class problem — per-class max softmax scores are
+#    naturally lower even for correct predictions.
+#  - Segmentation averages confidence over multiple characters, smoothing noise.
+_MNIST_CONF_THRESHOLD = 0.40
 
 
 def run_inference(
@@ -134,15 +138,16 @@ def run_inference(
     Run OCR on image bytes.
 
     Order:
-      1. MNIST CNN on small grayscale crops (≤96 px longest side), for digit tiles.
-      2. SimpleHTR line CNN for handwritten lines.
-      3. Tesseract fallback.
+      1. EMNIST-Balanced CNN with OpenCV character segmentation (primary path,
+         any image size, 47 alphanumeric classes).
+      2. SimpleHTR line CNN — fallback when CNN returns empty text.
+      3. Tesseract — last-resort fallback.
 
     ``reference_text`` (optional): ground-truth transcript; response includes
     ``character_accuracy_vs_reference`` (normalized edit-distance accuracy).
 
-    ``mnist_validation_accuracy_recorded`` is always read from persisted training metrics
-    when present (MNIST CNN validation split — character-level for digits).
+    ``mnist_validation_accuracy_recorded`` is always read from persisted training
+    metrics when present.
     """
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
     tmp_path = tmp.name

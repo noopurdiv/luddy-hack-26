@@ -11,3 +11,5 @@ httpx>=0.27
 python-multipart
 pytesseract
 Pillow
+tensorflow-datasets>=4.9.0
+importlib-resources
