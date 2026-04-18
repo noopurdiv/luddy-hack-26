@@ -102,15 +102,18 @@ def load_emnist_balanced() -> tuple:
         shuffle_files=False,
     )
 
-    def to_numpy(ds):
+    def to_numpy(ds, name="dataset"):
+        """Batch-load into numpy — ~50x faster than iterating sample-by-sample."""
         xs, ys = [], []
-        for img, lbl in ds:
-            xs.append(img.numpy())
-            ys.append(lbl.numpy())
-        return np.array(xs), np.array(ys)
+        for imgs, lbls in ds.batch(4096):
+            xs.append(imgs.numpy())
+            ys.append(lbls.numpy())
+            print(f"  {name}: loaded {sum(len(y) for y in ys)} samples…", end="\r")
+        print()
+        return np.concatenate(xs), np.concatenate(ys)
 
-    x_train, y_train = to_numpy(ds_train)
-    x_test, y_test = to_numpy(ds_test)
+    x_train, y_train = to_numpy(ds_train, "train")
+    x_test, y_test = to_numpy(ds_test, "test")
 
     # tfds returns (28, 28, 1) uint8; EMNIST images are 90° rotated in raw files
     # → transpose axes 0 and 1 (height/width) to restore correct orientation.
@@ -202,8 +205,8 @@ def main() -> int:
     out_dir = Path(__file__).resolve().parent.parent / "app" / "model" / "mnist-model"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    model_path = out_dir / "mnist_cnn.keras"
-    model.save(model_path)
+    model_path = out_dir / "mnist_cnn.h5"
+    model.save(str(model_path), save_format="h5")
     print(f"Saved model  → {model_path}")
 
     labels_path = out_dir / "class_labels.json"

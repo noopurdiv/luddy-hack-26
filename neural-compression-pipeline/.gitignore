@@ -1,5 +1,6 @@
 .env
 service_ocr/app/model/mnist-model/*.keras
+service_ocr/app/model/mnist-model/*.h5
 # Keep generated proof artifacts in version control
 !service_ocr/app/model/mnist-model/training_metrics.json
 !service_ocr/app/model/mnist-model/noise_metrics.json

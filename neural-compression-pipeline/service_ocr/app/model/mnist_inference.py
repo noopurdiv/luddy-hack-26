@@ -35,7 +35,13 @@ _FALLBACK_LABELS: list[str] = (
 
 
 def _model_path() -> Path:
-    return Path(__file__).resolve().parent / "mnist-model" / "mnist_cnn.keras"
+    # Prefer the H5 format (universally compatible with tf.keras in TF 2.x).
+    # Fall back to the .keras ZIP format if H5 is absent.
+    base = Path(__file__).resolve().parent / "mnist-model"
+    h5 = base / "mnist_cnn.h5"
+    if h5.is_file():
+        return h5
+    return base / "mnist_cnn.keras"
 
 
 def _labels_path() -> Path:
@@ -77,7 +83,7 @@ def ensure_mnist_model():
     try:
         import tensorflow as tf
 
-        _MODEL = tf.keras.models.load_model(path)
+        _MODEL = tf.keras.models.load_model(str(path))
         labels = _load_class_labels()
         logger.info(
             "EMNIST CNN loaded from %s (%d classes)", path, len(labels)
@@ -174,6 +180,10 @@ def _predict_crop(model, crop: np.ndarray, labels: list[str]) -> tuple[str, floa
     canvas[oy : oy + h, ox : ox + w] = crop
 
     resized = cv2.resize(canvas, (28, 28), interpolation=cv2.INTER_AREA)
+    # Ensure white-digit / black-background convention (EMNIST training format).
+    # If the crop is mostly white the polarity is inverted — flip it back.
+    if resized.mean() > 127:
+        resized = 255 - resized
     x_in = (resized.astype("float32") / 255.0)[None, ..., None]  # (1,28,28,1)
 
     probs = model.predict(x_in, verbose=0)[0]
